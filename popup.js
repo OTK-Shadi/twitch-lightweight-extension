@@ -1,25 +1,41 @@
-// popup.js
-
 const usernamePathRegex = /^\/([^/]+)/;
 const currentTabStreamBtn = document.getElementById('currentTabStreamBtn');
+const currentStreamCard = document.getElementById('currentStreamCard');
 const streamerInput = document.getElementById('streamerInput');
+const statusElement = document.getElementById('status');
+const statusText = document.getElementById('statusText');
+const inputError = document.getElementById('inputError');
+const goToStreamBtn = document.getElementById('goToStreamBtn');
 
 initializeCurrentTabShortcut();
 
 // Attach the event listener to the "Go to Stream" button
-document.getElementById('goToStreamBtn').addEventListener('click', function() {
-    // Get the streamer name from the input field
-    const streamerName = streamerInput.value.trim();
-
-    // Pass the streamer name to the openLightweightStream function
-    openLightweightStream(streamerName);
+goToStreamBtn.addEventListener('click', function() {
+    openLightweightStream();
 });
+
+streamerInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        openLightweightStream();
+    }
+});
+
+streamerInput.addEventListener('input', function() {
+    inputError.textContent = '';
+});
+
+function setStatus(isOnTwitch, message) {
+    statusElement.classList.toggle('on-twitch', isOnTwitch);
+    statusElement.classList.toggle('off-twitch', !isOnTwitch);
+    statusText.textContent = message;
+}
 
 function initializeCurrentTabShortcut() {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         const activeTab = tabs[0];
 
         if (!activeTab || !activeTab.url) {
+            setStatus(false, 'Could not inspect the active tab.');
             return;
         }
 
@@ -27,6 +43,7 @@ function initializeCurrentTabShortcut() {
         const isTwitchHost = tabUrl.hostname === 'www.twitch.tv' || tabUrl.hostname === 'twitch.tv';
 
         if (!isTwitchHost) {
+            setStatus(false, 'You are not on Twitch. Enter any streamer name below.');
             return;
         }
 
@@ -34,13 +51,16 @@ function initializeCurrentTabShortcut() {
 
         if (match && match[1]) {
             const username = match[1];
-            currentTabStreamBtn.textContent = `Open ${username}'s stream`;
-            currentTabStreamBtn.style.display = 'block';
+            setStatus(true, `On Twitch now: @${username}`);
+            currentTabStreamBtn.textContent = `Open @${username} stream`;
+            currentStreamCard.style.display = 'block';
             streamerInput.value = username;
 
             currentTabStreamBtn.addEventListener('click', function() {
                 openLightweightStream(username);
             });
+        } else {
+            setStatus(true, 'On Twitch. Enter a streamer name to continue.');
         }
     });
 }
@@ -51,11 +71,11 @@ function openLightweightStream(streamerName = null) {
         streamerName = streamerInput.value.trim();
     }
 
-    if (streamerName) {
-        // Construct the lightweight URL with the correct streamer name
-        const lightweightUrl = `https://player.twitch.tv/?channel=${streamerName}&parent=localhost`;
-        chrome.tabs.create({ url: lightweightUrl }); // Open stream in a new tab
-    } else {
-        alert('Please enter a valid streamer name!');
+    if (!streamerName) {
+        inputError.textContent = 'Please enter a streamer name.';
+        return;
     }
+
+    const lightweightUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(streamerName)}&parent=localhost`;
+    chrome.tabs.create({ url: lightweightUrl });
 }
