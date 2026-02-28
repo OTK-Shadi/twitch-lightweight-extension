@@ -32,30 +32,26 @@
             border: none;
             cursor: pointer;
             border-radius: 5px;
+            margin-bottom: 10px;
         }
 
         button:hover {
             background-color: #532f8f;
         }
 
-        .current-streamer {
-            padding: 8px;
-            cursor: pointer;
-            background-color: #444;
-            border-radius: 5px;
-            margin-bottom: 10px;
+        #currentTabStreamBtn {
+            background-color: #3b82f6;
         }
 
-        .current-streamer:hover {
-            background-color: #532f8f;
+        #currentTabStreamBtn:hover {
+            background-color: #2563eb;
         }
     </style>
 </head>
 <body>
     <h1>Enter Twitch Streamer Name</h1>
     
-    <!-- Current Streamer Display -->
-    <div id="currentStreamer" class="current-streamer" style="display: none;"></div>
+    <button id="currentTabStreamBtn" style="display: none;"></button>
     
     <!-- User Input -->
     <input type="text" id="streamerInput" placeholder="Enter Twitch name (e.g., caseoh_)">
